@@ -82,13 +82,21 @@ jobs:
         shell: pwsh
         run: .\scripts\sign.ps1 .\DevOpsDaysTasks\DevOpsDaysTasks.UI.exe -PfxFile  ${{ env.CERT_NAME }} -PfxPassword Password
 
-      - name: Create ZIP Archive
-        shell: pwsh
-        run: Compress-Archive -Path .\DevOpsDaysTasks\* -DestinationPath .\DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
-
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DevOpsDaysTasks
           path: DevOpsDaysTasks
+          
+      - name: Create ZIP Archive
+        shell: pwsh
+        run: Compress-Archive -Path .\DevOpsDaysTasks\* -DestinationPath .\DevOpsDaysTasks.zip
+
+      - name: Github Release
+        uses: softprops/action-gh-release@v2
+        if: ${{ inputs.version }}
+        with:
+          name: DevOpsDaysTasks
+          tag_name: ${{ inputs.version }}
+          files: DevOpsDaysTasks.zip 
