@@ -60,23 +60,9 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path .\DevOpsDaysTasks\* -DestinationPath .\DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.set-version.outputs.versionName }}
-          release_name: DevOpsDaysTasks ${{ steps.set-version.outputs.versionName }}
-          draft: false
-          prerelease: false
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
-          asset_name: DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
-          asset_content_type: application/zip
+          name: DevOpsDaysTasks
+          path: DevOpsDaysTasks
