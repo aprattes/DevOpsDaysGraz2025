@@ -38,6 +38,14 @@ jobs:
         shell: pwsh
         run: dotnet publish -c Release src\DevOpsDaysTasks.UI\ -o DevOpsDaysTasks /p:Version=${{ steps.set-version.outputs.version }} /p:VersionName=${{ steps.set-version.outputs.versionName }}
 
+# External files
+      - name: Checkout external files
+        uses: actions/checkout@v4
+        with:
+          repository: martinzimmermann/DevOpsDaysGraz2025-ExternalFiles
+          path: ExternalFiles
+
+
       - name: Create Templates Directory
         shell: pwsh
         run: New-Item -ItemType Directory -Path .\DevOpsDaysTasks\Templates -Force
@@ -48,11 +56,11 @@ jobs:
 
       - name: Copy Templates
         shell: pwsh
-        run: Copy-Item -Path .\workshop_material\default-tasks.xml -Destination .\DevOpsDaysTasks\Templates\
+        run: Copy-Item -Path .\ExternalFiles\default-tasks.xml -Destination .\DevOpsDaysTasks\Templates\
 
       - name: Copy Help Documents
         shell: pwsh
-        run: Copy-Item -Path .\workshop_material\Help.pdf -Destination .\DevOpsDaysTasks\Help\
+        run: Copy-Item -Path .\ExternalFiles\Help.pdf -Destination .\DevOpsDaysTasks\Help\
 
       - name: Create Secret
         shell: pwsh
