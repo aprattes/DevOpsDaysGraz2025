@@ -17,9 +17,66 @@ jobs:
 
       - name: Run Core Tests
         shell: pwsh
-        run: dotnet test ./.\src\DevOpsDaysTasks.Core.Tests
-    
+        run: dotnet test .\src\DevOpsDaysTasks.Core.Tests
 
-      - name: Hello Pipeline
+      - name: Run Integration Tests
         shell: pwsh
-        run: echo "Hello from the Pipeline"
+        run: dotnet test .\src\DevOpsDaysTasks.IntegrationTests
+
+      - name: Set Version Variables
+        id: set-version
+        shell: pwsh
+        run: |
+          $version = "1.0.${{ github.run_number }}"
+          $versionName = "v$version-${{ github.ref_name }}"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "versionName=$versionName" >> $env:GITHUB_OUTPUT
+
+      - name: Build Release
+        shell: pwsh
+        run: dotnet publish -c Release src\DevOpsDaysTasks.UI\ -o DevOpsDaysTasks /p:Version=${{ steps.set-version.outputs.version }} /p:VersionName=${{ steps.set-version.outputs.versionName }}
+
+      - name: Create Templates Directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path .\DevOpsDaysTasks\Templates -Force
+
+      - name: Create Help Directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path .\DevOpsDaysTasks\Help -Force
+
+      - name: Copy Templates
+        shell: pwsh
+        run: Copy-Item -Path .\workshop_material\default-tasks.xml -Destination .\DevOpsDaysTasks\Templates\
+
+      - name: Copy Help Documents
+        shell: pwsh
+        run: Copy-Item -Path .\workshop_material\Help.pdf -Destination .\DevOpsDaysTasks\Help\
+
+      - name: Sign Application
+        shell: pwsh
+        run: .\scripts\sign.ps1 .\DevOpsDaysTasks\DevOpsDaysTasks.UI.exe -PfxFile .\workshop_material\devopsdays_tasks_codesign.pfx -PfxPassword Password
+
+      - name: Create ZIP Archive
+        shell: pwsh
+        run: Compress-Archive -Path .\DevOpsDaysTasks\* -DestinationPath .\DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.set-version.outputs.versionName }}
+          release_name: DevOpsDaysTasks ${{ steps.set-version.outputs.versionName }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
+          asset_name: DevOpsDaysTasks-${{ steps.set-version.outputs.version }}.zip
+          asset_content_type: application/zip
