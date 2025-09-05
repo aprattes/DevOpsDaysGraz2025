@@ -2,6 +2,13 @@ name: Release Pipeline
 
 on:
   push: {}
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version to release'
+        required: true
+        default: '1.0.0'
+        type : string
 
 jobs:
   release-pipeline:
@@ -26,10 +33,12 @@ jobs:
         run: dotnet test .\src\DevOpsDaysTasks.IntegrationTests
 
       - name: Set Version Variables
+        env:
+          version: ${{ inputs.version || '1.0.0' }}
         id: set-version
         shell: pwsh
         run: |
-          $version = "1.0.${{ github.run_number }}"
+          $version = "${{ env.version }}"
           $versionName = "v$version-${{ github.ref_name }}"
           echo "version=$version" >> $env:GITHUB_OUTPUT
           echo "versionName=$versionName" >> $env:GITHUB_OUTPUT
